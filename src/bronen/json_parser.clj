@@ -33,7 +33,7 @@
              (if (re-matches #"[A-Za-z]" (str (first jsonstring)))
                (let [literal (lexer-literals jsonstring)]
                  (conj (lexer (drop (count (:value literal)) jsonstring)) literal))
-               (conj (lexer (rest jsonstring)) "_"))))))
+               {:token "err" :value jsonstring})))))
     nil))
 
 (defn parse
