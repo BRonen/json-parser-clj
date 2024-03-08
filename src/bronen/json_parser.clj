@@ -25,22 +25,33 @@
     (if (= (first jsonstring) \space)
       (lexer (rest jsonstring))
       (let [mappedchar (get characters-checkings-map (first jsonstring))]
-         (if mappedchar
-           (conj (lexer (rest jsonstring)) (mappedchar))
-           (if (re-matches #"\d" (str (first jsonstring)))
-             (let [numeral (lexer-numerals jsonstring)]
-               (conj (lexer (drop (count (:value numeral)) jsonstring)) numeral))
-             (if (re-matches #"[A-Za-z]" (str (first jsonstring)))
-               (let [literal (lexer-literals jsonstring)]
-                 (conj (lexer (drop (count (:value literal)) jsonstring)) literal))
-               {:token "err" :value jsonstring})))))
+        (if mappedchar
+          (conj (lexer (rest jsonstring)) (mappedchar))
+          (if (re-matches #"\d" (str (first jsonstring)))
+            (let [numeral (lexer-numerals jsonstring)]
+              (conj (lexer (drop (count (:value numeral)) jsonstring)) numeral))
+            (if (re-matches #"[A-Za-z]" (str (first jsonstring)))
+              (let [literal (lexer-literals jsonstring)]
+                (conj (lexer (drop (count (:value literal)) jsonstring)) literal))
+              {:token "err" :value jsonstring})))))
     nil))
+
+(defn parse-number [value] (Integer/parseInt (apply str value)))
+
+(defn parse-string [value] (apply str value))
 
 (defn parse
   "Parses json tokens into a valid clojure structure."
   [jsontokens]
-  (println jsontokens))
+  (let [[{token :token value :value} & tokens] jsontokens]
+    (if (= token "lbraces")
+      1
+      (if (= token "numeral")
+        (parse-number value)
+        (if (= token "quotes")
+          (parse-string (:value (first tokens)))
+          2)))))
 
 (defn -main
   [& args]
-  (-> (lexer (:input (first args))) parse))
+  (println (-> (lexer (:input (first args))) parse)))
