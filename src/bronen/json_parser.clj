@@ -40,17 +40,26 @@
 
 (defn parse-string [value] (apply str value))
 
+(defn parse-object
+  [tokens]
+  (let [assignment (take-while #(not (or (= (:token %) "comma") (= (:token %) "rbraces"))) tokens)]
+    (if (> (count assignment) 2)
+      (conj {(apply str (:value (first assignment)))
+               (apply str (:value (first (drop 3 assignment))))}
+              (parse-object (drop (count assignment) tokens)))
+      {})))
+
 (defn parse
   "Parses json tokens into a valid clojure structure."
   [jsontokens]
   (let [[{token :token value :value} & tokens] jsontokens]
     (if (= token "lbraces")
-      1
+      (parse-object tokens)
       (if (= token "numeral")
         (parse-number value)
         (if (= token "quotes")
           (parse-string (:value (first tokens)))
-          2)))))
+          "not implemented")))))
 
 (defn -main
   [& args]
