@@ -7,11 +7,27 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  test:
+    strategy:
+      matrix:
+        java-version: ["8", "11", "17", "21"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Run tests
-      run: clojure -T:build test
+      - name: Prepare java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "adopt"
+          java-version: ${{ matrix.java-version }}
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@12.1
+        with:
+          cli: 1.11.1.1413
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: clojure -T:build test
