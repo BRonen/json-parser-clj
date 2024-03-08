@@ -3,8 +3,8 @@
  :aliases
  {:run-m {:main-opts ["-m" "bronen.json-parser"]}
   :run-x {:ns-default bronen.json-parser
-          :exec-fn greet
-          :exec-args {:name "Clojure"}}
+          :exec-fn -main
+          :exec-args {:input "{ \"wasd\": 123, \"dsaw\": \"teste\" }"}}
   :build {:deps {io.github.clojure/tools.build
                  {:mvn/version "0.9.6"}}
           :ns-default build}
