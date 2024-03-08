@@ -36,6 +36,8 @@
               {:token "err" :value jsonstring})))))
     nil))
 
+(declare parse)
+
 (defn parse-number [value] (Integer/parseInt (apply str value)))
 
 (defn parse-string [value] (apply str value))
@@ -45,8 +47,8 @@
   (let [assignment (take-while #(not (or (= (:token %) "comma") (= (:token %) "rbraces"))) tokens)]
     (if (> (count assignment) 2)
       (conj {(apply str (:value (first assignment)))
-               (apply str (:value (first (drop 3 assignment))))}
-              (parse-object (drop (count assignment) tokens)))
+               (parse (drop 2 assignment))}
+              (parse-object (drop (+ (count assignment) 1) tokens)))
       {})))
 
 (defn parse
