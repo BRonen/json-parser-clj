@@ -14,4 +14,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run tests
-      run: clj -T:build test
+      run: clojure -T:build test
