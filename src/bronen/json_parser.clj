@@ -5,13 +5,13 @@
   {\{ (fn [] {:token "lbraces"})
    \} (fn [] {:token "rbraces"})
    \, (fn [] {:token "comma"})
-   \: (fn [] {:token "colon"})
-   \" (fn [] {:token "quotes"})})
+   \: (fn [] {:token "colon"})})
 
 (defn lexer-literals
   "Takes strings contents as a token"
   [jsonstring]
-  {:token "literal" :value (take-while #(re-matches #"[A-Za-z]" (str %)) (vec jsonstring))})
+  (let [value (take-while #(not (= % \")) (vec jsonstring))]
+    {:token "literal" :value value}))
 
 (defn lexer-numerals
   "Takes entire literals like strings contents or numbers from characters"
@@ -30,9 +30,11 @@
           (if (re-matches #"\d" (str (first jsonstring)))
             (let [numeral (lexer-numerals jsonstring)]
               (conj (lexer (drop (count (:value numeral)) jsonstring)) numeral))
-            (if (re-matches #"[A-Za-z]" (str (first jsonstring)))
-              (let [literal (lexer-literals jsonstring)]
-                (conj (lexer (drop (count (:value literal)) jsonstring)) literal))
+            (if (= \" (first jsonstring))
+              (let [literal (lexer-literals (rest jsonstring))
+                    charslength (+ (count (:value literal)) 2)
+                    r (drop charslength jsonstring)]
+                (conj (lexer r) literal))
               {:token "err" :value jsonstring})))))
     nil))
 
@@ -40,15 +42,21 @@
 
 (defn parse-number [value] (Integer/parseInt (apply str value)))
 
-(defn parse-string [value] (apply str value))
+(defn parse-literal [value] (apply str value))
 
 (defn parse-object
   [tokens]
-  (let [assignment (take-while #(not (or (= (:token %) "comma") (= (:token %) "rbraces"))) tokens)]
-    (if (> (count assignment) 2)
-      (conj {(apply str (:value (first assignment)))
-               (parse (drop 2 assignment))}
-              (parse-object (drop (+ (count assignment) 1) tokens)))
+  (let [assignment (take-while #(not (or (= (:token %) "comma") (= (:token %) "rbraces"))) tokens)
+        assignmentlength (count assignment)]
+    (if (> assignmentlength 2)
+      (let [key (apply str (:value (first assignment)))
+            value (parse (drop 2 assignment))]
+        (conj {key value}
+              (let [r (drop assignmentlength tokens)]
+                (if (= (first r)
+                       {:token "comma"})
+                  (parse-object (rest r))
+                  (parse-object r)))))
       {})))
 
 (defn parse
@@ -59,10 +67,10 @@
       (parse-object tokens)
       (if (= token "numeral")
         (parse-number value)
-        (if (= token "quotes")
-          (parse-string (:value (first tokens)))
+        (if (= token "literal")
+          (parse-literal value)
           "not implemented")))))
 
 (defn -main
   [& args]
-  (println (-> (lexer (:input (first args))) parse)))
+  (println (do (println (lexer (:input (first args)))) (parse (lexer (:input (first args)))))))

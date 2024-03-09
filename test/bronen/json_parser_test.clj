@@ -12,24 +12,24 @@
           out [{:token "numeral", :value '(\1 \2 \3 \1 \3 \2)}]]
       (is (= (lexer in) out))))
   (testing "lexing a string"
-    (let [in "\"helloworld\""
-          out [{:token "quotes"} {:token "literal" :value '(\h \e \l \l \o \w \o \r \l \d)} {:token "quotes"}]]
+    (let [in "\"hello world\""
+          out [{:token "literal" :value '(\h \e \l \l \o \space \w \o \r \l \d)}]]
       (is (= (lexer in) out)))))
 
 (deftest parser-test
   (testing "parsing a string"
-    (let [in "\"helloworld\""
-          out "helloworld"]
+    (let [in "\"hello world\""
+          out "hello world"]
       (is (= (-> in lexer parse) out))))
   (testing "parsing a numeral"
     (let [in "12321"
           out 12321]
       (is (= (-> in lexer parse) out))))
   (testing "parsing a object"
-    (let [in "{ wasd: 123 }"
+    (let [in "{ \"wasd\": 123 }"
           out {"wasd" 123}]
       (is (= (-> in lexer parse) out))))
   (testing "parsing a nested object"
-    (let [in "{ foo: \"bar\", nested: { foo: \"bar\" } }"
+    (let [in "{ \"foo\": \"bar\", \"nested\": { \"foo\": \"bar\" } }"
           out {"foo" "bar", "nested" {"foo" "bar"}}]
       (is (= (-> in lexer parse) out)))))
