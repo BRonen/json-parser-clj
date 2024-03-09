@@ -1,5 +1,6 @@
 (ns bronen.json-parser
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.string :refer [starts-with?]]))
 
 (def characters-checkings-map
   {\{ (fn [] {:token "lbraces"})
@@ -35,7 +36,11 @@
                     charslength (+ (count (:value literal)) 2)
                     r (drop charslength jsonstring)]
                 (conj (lexer r) literal))
-              {:token "err" :value jsonstring})))))
+              (if (starts-with? (apply str jsonstring) "true")
+                '({:token "boolean" :value true})
+                (if (starts-with? (apply str jsonstring) "false")
+                  '({:token "boolean" :value false})
+                  '({:token "err"}))))))))
     nil))
 
 (declare parse)
@@ -61,16 +66,16 @@
 
 (defn parse
   "Parses json tokens into a valid clojure structure."
-  [jsontokens]
-  (let [[{token :token value :value} & tokens] jsontokens]
+  [tokens]
+  (let [{token :token value :value} (first tokens)] 
     (if (= token "lbraces")
-      (parse-object tokens)
+      (parse-object (rest tokens))
       (if (= token "numeral")
         (parse-number value)
         (if (= token "literal")
           (parse-literal value)
-          "not implemented")))))
+          value)))))
 
 (defn -main
   [& args]
-  (println (do (println (lexer (:input (first args)))) (parse (lexer (:input (first args)))))))
+  (-> args first :input lexer parse))
